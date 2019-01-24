@@ -6,11 +6,11 @@
 #define	HASH_LEN	32
 
 
-//	==========================  Structs  ==========================
+//	==========================  Structs/Types  ==========================
 
 typedef struct
 {
 	char user_name[UNAME_LEN], full_name[NAME_LEN], hash[HASH_LEN];
-}user_info_t;
+} user_info_t;
 
 #endif
