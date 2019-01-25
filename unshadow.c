@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <stdbool.h>
 #include "abstract_types.h"
 
 #define	DEFAULT_OUT_FILE	"passwordfile.txt"
@@ -22,7 +23,7 @@ int main(int argc, char* argv[])
 {
 	extern char *optarg;
 	char *passwd_file, *shadow_file, *out_file = DEFAULT_OUT_FILE;
-	char passwd_file_flag = 0, shadow_file_flag = 0;
+	bool passwd_file_flag = false, shadow_file_flag = false;
 	int option;
 
 	while((option = getopt(argc, argv, "p:s:o:")) != -1)
@@ -31,11 +32,11 @@ int main(int argc, char* argv[])
 		{
 			case 'p':
 				passwd_file = optarg;
-				passwd_file_flag = 1;
+				passwd_file_flag = true;
 				break;
 			case 's':
 				shadow_file = optarg;
-				shadow_file_flag = 1;
+				shadow_file_flag = true;
 				break;
 			case 'o':
 				out_file = optarg;
@@ -45,7 +46,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	if(passwd_file_flag == 0 || shadow_file_flag == 0)
+	if(!passwd_file_flag || !shadow_file_flag)
 		print_usage();
 
 	merge_files(passwd_file, shadow_file, out_file);
@@ -57,7 +58,7 @@ int main(int argc, char* argv[])
 static void print_usage()
 {
 	printf("Usage:\nunshadow -p <passwd file> -s <shadow file> [-o <output file]\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 
