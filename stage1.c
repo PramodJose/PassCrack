@@ -61,7 +61,8 @@ void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** re
 	}
 	
 	snprintf(message, MSG_LEN, "The file %s cannot be opened for reading and writing\n", *out);
-	if(euidaccess(*out, R_OK | W_OK) != 0)
+	//	if file exists and does not have required permissions, then show the error.
+	if(euidaccess(*out, F_OK) == 0 && euidaccess(*out, R_OK | W_OK) != 0)
 	{
 		perror(message);
 		exit(EXIT_FAILURE);
