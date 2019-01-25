@@ -42,6 +42,8 @@ int read_hashes(const char* restrict merged_file, trie_t restrict user_hashes)
 
 	for(; fread(&user, sizeof(user), 1, merged_fd) == 1; ++i)
 	{
+		// Uncomment the following code if you want to generalise the finding of the $ signs.
+		//	In that case, make j = 0 (or just remove it), from the declaration above.
 		/*for(j = 0, count_dollars = 0; count_dollars != 3; ++j)
 			if(user.hash[j] == '$')
 				++count_dollars;*/
