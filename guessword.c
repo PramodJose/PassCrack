@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 	users_count = read_hashes(merged, user_hashes);
 	bitmap_cracked = calloc(users_count, sizeof(int));
 
-	d_attack(dictionary, given_in_class);
+	d_attack(dictionary, out, given_in_class);
 
 	destroy_trie(user_hashes);
 	free(bitmap_cracked);
