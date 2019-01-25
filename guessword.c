@@ -18,6 +18,8 @@ typedef enum {standard, given_in_class} dict_type;
 
 int main(int argc, char* argv[])
 {
+	clock_t start_time = clock();
+	float time_taken;
 	char* dictionary = DEFAULT_DICTIONARY, *merged = DEFAULT_MERGED, *out = DEFAULT_OUT;
 	dict_type type = DEFAULT_DICT_TYPE;
 	int users_count;
@@ -32,5 +34,8 @@ int main(int argc, char* argv[])
 
 	destroy_trie(user_hashes);
 	free(bitmap_cracked);
+	time_taken = clock() - start_time;
+	time_taken = time_taken/CLOCKS_PER_SEC;
+	printf("Execution time: %lf seconds\n", time_taken);
 	return 0;
 }
