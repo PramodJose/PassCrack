@@ -1,3 +1,9 @@
+#include <unistd.h>
+#include <errno.h>
+#include <stdlib.h>
+
+#define MSG_LEN	128
+
 void print_usage();
 void parse_cmdline(int argc, char* argv[], char** restrict, char** restrict, char** restrict, dict_type* restrict);
 int read_hashes(const char* restrict, trie_t restrict);
@@ -5,7 +11,7 @@ int read_hashes(const char* restrict, trie_t restrict);
 
 void print_usage()
 {
-	printf("Usage:\nguessword [-d <dictionary file>] [-i <merged file>] [-o <output file] [-m s (standard)|c (given in class)] -lpthread -lcrypt\n");
+	printf("Usage:\nguessword [-d <dictionary file>] [-i <merged file>] [-o <output file>] [-m <s (standard)|c (given in class)>] -lpthread -lcrypt\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -13,7 +19,8 @@ void print_usage()
 void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** restrict merged, char** restrict out, dict_type* restrict type)
 {
 	extern char* optarg;
-	int option;
+	int option, errsv;
+	char message [MSG_LEN];
 
 	while((option = getopt(argc, argv, "d:i:o:m:")) != -1)
 	{
@@ -37,6 +44,27 @@ void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** re
 			case '?':
 				print_usage();
 		}
+	}
+
+	snprintf(message, MSG_LEN, "The file %s cannot be opened for reading\n", *dictionary);
+	if(euidaccess(*dictionary, R_OK) != 0)
+	{
+		perror(message);
+		exit(EXIT_FAILURE);
+	}
+
+	snprintf(message, MSG_LEN, "The file %s cannot be opened for reading\n", *merged);
+	if(euidaccess(*merged, R_OK) != 0)
+	{
+		perror(message);
+		exit(EXIT_FAILURE);
+	}
+	
+	snprintf(message, MSG_LEN, "The file %s cannot be opened for reading and writing\n", *out);
+	if(euidaccess(*out, R_OK | W_OK) != 0)
+	{
+		perror(message);
+		exit(EXIT_FAILURE);
 	}
 }
 
