@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <getopt.h>
 #include "trie.h"
@@ -23,13 +24,13 @@ int main(int argc, char* argv[])
 
 	parse_cmdline(argc, argv, &dictionary, &merged, &out, &type);
 
-	user_hashes = create_trie();
+	/*user_hashes = create_trie();
 	users_count = read_hashes(merged, user_hashes);
 	bitmap_cracked = calloc(users_count, sizeof(int));
 
 	d_attack(dictionary, out, type);
 
 	destroy_trie(user_hashes);
-	free(bitmap_cracked);
+	free(bitmap_cracked);*/
 	return 0;
 }
