@@ -5,7 +5,6 @@
 #define	MAX_THREADS	8
 #define LINE_LEN	64
 
-typedef enum {standard, given_in_class} dict_type;
 typedef struct
 {
 	char *dictionary, temp_file_name[8];
@@ -91,18 +90,21 @@ void* thread_entry(void* arguments)
 	args->cracked_count = 0;
 	fseek(dictionary_fh, args->begin, SEEK_SET);
 
-	if(args->type == given_in_class)
-		do
-		{
+	
+	do
+	{
+		if(args->type == given_in_class)
 			fscanf(dictionary_fh, "%d%f%d%s", &i_dummy, &f_dummy, &i_dummy, d_line);
-			fprintf(args->out_fh, "%s\n", d_line);
-		} while(ftell(dictionary_fh) < end);
-	else
-		do
+		else
 		{
-			// Need to write code for general case (rockyou.txt).
-			break;
-		} while(ftell(dictionary_fh) < end);
+			fgets(d_line, LINE_LEN, dictionary_fh);
+			i_dummy = strlen(d_line);
+			d_line[i_dummy - 1] = '\0';
+		}
+
+		fprintf(args->out_fh, "%s\n", d_line);
+
+	} while(ftell(dictionary_fh) < end);
 
 
 	fclose(dictionary_fh);

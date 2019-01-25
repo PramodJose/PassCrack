@@ -1,21 +1,21 @@
 void print_usage();
-void parse_cmdline(int argc, char* argv[], char** restrict, char** restrict, char** restrict);
+void parse_cmdline(int argc, char* argv[], char** restrict, char** restrict, char** restrict, dict_type* restrict);
 int read_hashes(const char* restrict, trie_t restrict);
 
 
 void print_usage()
 {
-	printf("Usage:\nguessword [-d <dictionary file>] [-i <merged file>] [-o <output file]\n");
+	printf("Usage:\nguessword [-d <dictionary file>] [-i <merged file>] [-o <output file] [-m s (standard)|c (given in class)] -lpthread -lcrypt\n");
 	exit(EXIT_FAILURE);
 }
 
 
-void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** restrict merged, char** restrict out)
+void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** restrict merged, char** restrict out, dict_type* restrict type)
 {
 	extern char* optarg;
 	int option;
 
-	while((option = getopt(argc, argv, "d:i:o:")) != -1)
+	while((option = getopt(argc, argv, "d:i:o:m:")) != -1)
 	{
 		switch(option)
 		{
@@ -27,6 +27,12 @@ void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** re
 				break;
 			case 'o':
 				*out = optarg;
+				break;
+			case 'm':
+				if(optarg[0] == 's')
+					*type = standard;
+				else if(optarg[0] == 'c')
+					*type = given_in_class;
 				break;
 			case '?':
 				print_usage();
