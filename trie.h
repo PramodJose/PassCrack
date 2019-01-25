@@ -4,6 +4,8 @@
 #include <malloc.h>					// for dynamic memory allocations
 #include <stdio.h>					// for writing to streams
 #include <stdlib.h>					// for exit(), in case abnormal conditions rear their ugly head :P
+#include <stdbool.h>
+#include "abstract_types.h"
 
 #define	DEFAULT_CHILD_ARR_SIZE	8
 #define	DEFAULT_USERID_ARR_SIZE	4
@@ -39,6 +41,8 @@ typedef struct trie_node								// Holds information related to a Trie Node.
 static trie_node* create_trie_node(node_type);
 trie_t create_trie();
 void add_pair(trie_t restrict, const char* restrict, int);
+int* retrieve_worker(trie_t restrict, const char* restrict, int* restrict, char* restrict, int);
+int* retrieve_users(trie_t restrict, const char* restrict, int* restrict);
 void destroy_trie(trie_t restrict);
 
 
@@ -129,6 +133,38 @@ void add_pair(trie_t restrict root, const char* restrict hash, int user_id)
 	}
 
 	add_pair(next_node, hash + 1, user_id);
+}
+
+
+/*	Return the base address	of an array containing the list of user IDs (this array is on the heap and will be
+**	freed when destroy_trie() is called). The count of user IDs is stored in the argument user_count.
+**	NULL is returned in case the hash does not exist in the trie.
+*/
+int* retrieve_users(trie_t restrict root, const char* restrict hash, int* restrict user_count)
+{
+	int pos_in_hash = 0, i;
+	bool found;
+
+	for(; hash[pos_in_hash] != '\0'; ++pos_in_hash)
+	{
+		for(i = 0, found = false; i < root->element_count; ++i)
+			if(hash[pos_in_hash] == root->children[i].hash_ch)
+			{
+				found = true;
+				break;
+			}
+
+		if(found)
+			root = root->children[i].addr;
+		else
+		{
+			*user_count = 0;
+			return NULL;
+		}
+	}
+
+	*user_count = root->element_count;
+	return root->user_id;
 }
 
 
