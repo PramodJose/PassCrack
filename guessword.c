@@ -18,20 +18,23 @@ void parse_cmdline(int argc, char* argv[], char** restrict, char** restrict, cha
 int main(int argc, char* argv[])
 {
 	char* dictionary = DEFAULT_DICTIONARY, *merged = DEFAULT_MERGED, *out = DEFAULT_OUT;
-	int *list, count = 0, i;
 
 	parse_cmdline(argc, argv, &dictionary, &merged, &out);
-	printf("d: %s, m: %s, o: %s\n", dictionary, merged, out);
 
 	user_hashes = create_trie();
 	read_hashes(merged, user_hashes);
-	list = retrieve_users(user_hashes, "t2R7Ly1RLRgoF/FcgmZHo0", &count);
+
+	//	Test code
+	int *list, count = 0, i;
+	list = retrieve_users(user_hashes, "1Lb95K1anOkGjjWwlnPE1/", &count);
 
 	if(list == NULL)
 		printf("Did not find anything\n");
 	else
 		for(i = 0; i < count; ++i)
 			printf("%d ", list[i]);
+	printf("\n");
+	//	End of test code
 
 	destroy_trie(user_hashes);
 }
