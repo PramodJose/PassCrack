@@ -9,64 +9,24 @@
 trie_t user_hashes;
 int* bitmap_cracked;
 
-#include "init.c"
-
-void print_usage();
-void parse_cmdline(int argc, char* argv[], char** restrict, char** restrict, char** restrict);
+#include "stage1.c"
+#include "d_attack.c"
 
 
 int main(int argc, char* argv[])
 {
 	char* dictionary = DEFAULT_DICTIONARY, *merged = DEFAULT_MERGED, *out = DEFAULT_OUT;
+	int users_count;
 
 	parse_cmdline(argc, argv, &dictionary, &merged, &out);
 
 	user_hashes = create_trie();
-	read_hashes(merged, user_hashes);
+	users_count = read_hashes(merged, user_hashes);
+	bitmap_cracked = calloc(users_count, sizeof(int));
 
-	//	Test code
-	int *list, count = 0, i;
-	list = retrieve_users(user_hashes, "1Lb95K1anOkGjjWwlnPE1/", &count);
-
-	if(list == NULL)
-		printf("Did not find anything\n");
-	else
-		for(i = 0; i < count; ++i)
-			printf("%d ", list[i]);
-	printf("\n");
-	//	End of test code
+	d_attack(dictionary, given_in_class);
 
 	destroy_trie(user_hashes);
-}
-
-
-void print_usage()
-{
-	printf("Usage:\nguessword [-d <dictionary file>] [-i <merged file>] [-o <output file]\n");
-	exit(EXIT_FAILURE);
-}
-
-
-void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** restrict merged, char** restrict out)
-{
-	extern char* optarg;
-	int option;
-
-	while((option = getopt(argc, argv, "d:i:o:")) != -1)
-	{
-		switch(option)
-		{
-			case 'd':
-				*dictionary = optarg;
-				break;
-			case 'i':
-				*merged = optarg;
-				break;
-			case 'o':
-				*out = optarg;
-				break;
-			case '?':
-				print_usage();
-		}
-	}
+	free(bitmap_cracked);
+	return 0;
 }
