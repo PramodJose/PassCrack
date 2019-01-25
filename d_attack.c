@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define	MAX_THREADS	8
-#define LINE_LEN	64
+#define	MAX_THREADS	4
+#define LINE_LEN	400
 
 typedef struct
 {
