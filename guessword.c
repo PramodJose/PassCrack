@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <getopt.h>
+#include <time.h>
 #include "trie.h"
 
 trie_t user_hashes;
@@ -18,12 +19,14 @@ typedef enum {standard, given_in_class} dict_type;
 
 int main(int argc, char* argv[])
 {
-	clock_t start_time = clock();
-	float time_taken;
+	struct timespec start = {0, 0}, end = {0, 0};
 	char* dictionary = DEFAULT_DICTIONARY, *merged = DEFAULT_MERGED, *out = DEFAULT_OUT;
 	dict_type type = DEFAULT_DICT_TYPE;
 	int users_count;
 	FILE *out_fh;
+	long int seconds_elapsed;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
 
 	parse_cmdline(argc, argv, &dictionary, &merged, &out, &type);
 
@@ -35,20 +38,28 @@ int main(int argc, char* argv[])
 
 	destroy_trie(user_hashes);
 	free(bitmap_cracked);
-	time_taken = clock() - start_time;
-	time_taken = time_taken/CLOCKS_PER_SEC;
+
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	seconds_elapsed = end.tv_sec - start.tv_sec;
 
 	out_fh = fopen(out, "a");
-	if(time_taken > 600)
+
+	if(seconds_elapsed < 2)				// We can offer a little more precision if the seconds elapsed is less than 2.
 	{
-		time_taken /= 60;
-		printf("Execution time: %lf minutes\n", time_taken);
-		fprintf(out_fh, "Execution time: %lf minutes\n", time_taken);
+		double precise_delta = (end.tv_nsec - start.tv_nsec) / 10E9;
+		printf("Execution time: %lf seconds\n", precise_delta);
+		fprintf(out_fh, "Execution time: %lf seconds\n", precise_delta);
+	}
+	else if(seconds_elapsed > 600)
+	{
+		float minutes_elapsed = seconds_elapsed / 60.0;
+		printf("Execution time: %lf minutes\n", minutes_elapsed);
+		fprintf(out_fh, "Execution time: %lf minutes\n", minutes_elapsed);
 	}
 	else
 	{
-		printf("Execution time: %lf seconds\n", time_taken);
-		fprintf(out_fh, "Execution time: %lf seconds\n", time_taken);
+		printf("Execution time: %ld seconds\n", seconds_elapsed);
+		fprintf(out_fh, "Execution time: %ld seconds\n", seconds_elapsed);
 	}
 	
 	fclose(out_fh);
