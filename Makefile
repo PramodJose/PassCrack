@@ -28,7 +28,7 @@ clean:
 	rm $(GWORD_EXEC)
 
 cleanall:
-	rm $(UNSHADOW_EXEC)
-	rm $(GWORD_EXEC)
 	rm $(MERGED_FILE)
 	rm $(FINAL_OUT)
+	rm $(UNSHADOW_EXEC)
+	rm $(GWORD_EXEC)
