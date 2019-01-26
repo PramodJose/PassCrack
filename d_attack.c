@@ -2,13 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <crypt.h>
+#include "abstract_types.h"
 
 #define	MAX_THREADS	8
-#define LINE_LEN	400
+#define LINE_LEN	512
 
 typedef struct
 {
-	char *dictionary, temp_file_name[8];
+	char *dictionary, *merged, temp_file_name[8];
 	dict_type type;
 	long int begin, end;
 	FILE* out_fh;
@@ -19,11 +20,11 @@ typedef struct
 void* thread_entry(void*);
 
 
-void d_attack(char* restrict dictionary, char* restrict out, dict_type type)
+void d_attack(char* restrict dictionary, char* restrict merged, char* restrict out, dict_type type)
 {
 	FILE *dictionary_fh = fopen(dictionary, "r"), *out_fh = fopen(out, "w"), *thread_in;
 	long file_size, fraction, beg = 0, end = 0;
-	int i;
+	int i, total_cracked = 0;
 	pthread_t thread_id [MAX_THREADS];
 	thread_args args [MAX_THREADS];
 	char line [LINE_LEN];
@@ -51,9 +52,9 @@ void d_attack(char* restrict dictionary, char* restrict out, dict_type type)
 		args[i].type = type;
 		args[i].begin = beg;
 		args[i].end = end;
+		args[i].merged = merged;
 		strcpy(args[i].temp_file_name, "XXXXXX");
 		args[i].out_fh = fdopen(mkstemp(args[i].temp_file_name), "w+");
-		printf("%d -> %s\n", i, args[i].temp_file_name);
 
 		pthread_create(&thread_id[i], NULL, thread_entry, (void*) &args[i]);
 
@@ -65,8 +66,8 @@ void d_attack(char* restrict dictionary, char* restrict out, dict_type type)
 	// joining the threads.
 	for(i = 0; i < MAX_THREADS; ++i)
 	{
-		printf("I\'m waiting\n");
 		pthread_join(thread_id[i], NULL);
+		total_cracked += args[i].cracked_count;
 
 		thread_in = args[i].out_fh;
 		fseek(thread_in, 0, SEEK_SET);
@@ -78,6 +79,8 @@ void d_attack(char* restrict dictionary, char* restrict out, dict_type type)
 		remove(args[i].temp_file_name);
 	}
 
+	fprintf(out_fh, "\n\nTotal passwords cracked = %d\n", total_cracked);
+	printf("Total passwords cracked = %d\n", total_cracked);
 	fclose(out_fh);
 }
 
@@ -85,12 +88,13 @@ void d_attack(char* restrict dictionary, char* restrict out, dict_type type)
 void* thread_entry(void* arguments)
 {
 	thread_args* args = arguments;
-	FILE* dictionary_fh = fopen(args->dictionary, "r");
+	FILE *dictionary_fh = fopen(args->dictionary, "r"), *merged_fh = fopen(args->merged, "r");
 	long int end = args->end;
 	char d_line [LINE_LEN], *calculated_hash;
 	int users_count, i, *users_list;
 	float f_dummy;
 	struct crypt_data data;
+	user_info_t user;
 	data.initialized = 0;
 
 	args->cracked_count = 0;
@@ -114,13 +118,18 @@ void* thread_entry(void* arguments)
 		if(users_list != NULL)
 		{
 			for(i = 0 ; i < users_count; ++i)
-				fprintf(args->out_fh, "%d ", users_list[i]);
-			fprintf(args->out_fh, "%s\n\n", d_line);
+			{
+				fseek(merged_fh, users_list[i] * sizeof(user), SEEK_SET);
+				fread(&user, sizeof(user), 1, merged_fh);
+				fprintf(args->out_fh, "%5d  |  %-15s | %-40s | %-50s\n", users_list[i] + 1, user.user_name, user.full_name, d_line);
+			}
+			args->cracked_count += users_count;
 		}
 
 	} while(ftell(dictionary_fh) < end);
 
 
 	fclose(dictionary_fh);
+	fclose(merged_fh);
 	return NULL;
 }
