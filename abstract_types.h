@@ -13,4 +13,6 @@ typedef struct
 	char user_name[UNAME_LEN], full_name[NAME_LEN], hash[HASH_LEN];
 } user_info_t;
 
+char algo_n_salt[UNAME_LEN + NAME_LEN + HASH_LEN];
+
 #endif
