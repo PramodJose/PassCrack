@@ -118,6 +118,7 @@ void* thread_entry(void* arguments)
 				fseek(merged_fh, users_list[i] * sizeof(user), SEEK_SET);
 				fread(&user, sizeof(user), 1, merged_fh);
 				fprintf(args->out_fh, "%5d  |  %-15s | %-40s | %-50s |\n", users_list[i], user.user_name, user.full_name, d_line);
+				bitmap_cracked[users_list[i] - 1] = 1;
 			}
 			args->cracked_count += users_count;
 		}
