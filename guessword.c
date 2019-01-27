@@ -20,12 +20,12 @@ typedef enum {start_timer, stop_timer} timer_state;
 
 int main(int argc, char* argv[])
 {
-	char* dictionary = DEFAULT_DICTIONARY, *merged = DEFAULT_MERGED, *out = DEFAULT_OUT;
+	char* dictionary = DEFAULT_DICTIONARY, *merged = DEFAULT_MERGED, *rule = NULL, *out = DEFAULT_OUT;
 	dict_type type = DEFAULT_DICT_TYPE;
 	FILE *dict_fh, *merged_fh, *out_fh;
 
 	timer(start_timer, NULL, NULL);
-	parse_cmdline(argc, argv, &dictionary, &merged, &out, &type);
+	parse_cmdline(argc, argv, &dictionary, &merged, &rule, &out, &type);
 	setup(dictionary, &dict_fh, merged, &merged_fh, out, &out_fh);
 
 	d_attack(dictionary, dict_fh, merged, out_fh, type);

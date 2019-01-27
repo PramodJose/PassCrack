@@ -21,13 +21,13 @@ void print_usage()
 }
 
 
-void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** restrict merged, char** restrict out, dict_type* restrict type)
+void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** restrict merged, char** restrict rule, char** restrict out, dict_type* restrict type)
 {
 	extern char* optarg;
 	int option, errsv;
 	char message [MSG_LEN];
 
-	while((option = getopt(argc, argv, "d:i:o:m:")) != -1)
+	while((option = getopt(argc, argv, "d:i:o:m:r:")) != -1)
 	{
 		switch(option)
 		{
@@ -45,6 +45,9 @@ void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** re
 					*type = standard;
 				else if(optarg[0] == 'c')
 					*type = given_in_class;
+				break;
+			case 'r':
+				*rule = optarg;
 				break;
 			case '?':
 				print_usage();
