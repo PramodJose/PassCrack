@@ -7,6 +7,7 @@
 #define	MAX_THREADS	8
 #define LINE_LEN	512
 
+
 typedef struct
 {
 	char *dictionary, *merged, temp_file_name[8];
@@ -18,13 +19,14 @@ typedef struct
 
 
 void* thread_entry(void*);
+void d_attack(char*, FILE* restrict, char*, FILE* restrict, dict_type);
 
 
-void d_attack(char* restrict dictionary, char* restrict merged, char* restrict out, dict_type type)
+void d_attack(char* dictionary, FILE* restrict dictionary_fh, char* merged, FILE* restrict out_fh, dict_type type)
 {
-	FILE *dictionary_fh = fopen(dictionary, "r"), *out_fh = fopen(out, "w"), *thread_in;
+	FILE *thread_in;
 	long file_size, fraction, beg = 0, end = 0;
-	int i, total_cracked = 0;
+	int i;
 	pthread_t thread_id [MAX_THREADS];
 	thread_args args [MAX_THREADS];
 	char line [LINE_LEN];
@@ -61,7 +63,7 @@ void d_attack(char* restrict dictionary, char* restrict merged, char* restrict o
 		beg = end + 1;
 	}
 
-	fclose(dictionary_fh);
+	fseek(dictionary_fh, 0, SEEK_SET);
 
 	// joining the threads.
 	for(i = 0; i < MAX_THREADS; ++i)
@@ -78,24 +80,19 @@ void d_attack(char* restrict dictionary, char* restrict merged, char* restrict o
 		fclose(thread_in);
 		remove(args[i].temp_file_name);
 	}
-
-	fprintf(out_fh, "\n\nTotal passwords cracked = %d\n", total_cracked);
-	printf("Total passwords cracked = %d\n", total_cracked);
-	fclose(out_fh);
 }
 
 
 void* thread_entry(void* arguments)
 {
 	thread_args* args = arguments;
-	FILE *dictionary_fh = fopen(args->dictionary, "r"), *merged_fh = fopen(args->merged, "r");
+	FILE *dictionary_fh = fopen(args->dictionary, "r"), *merged_fh = fopen(args->merged, "rb");
 	long int end = args->end;
 	char d_line [LINE_LEN], *calculated_hash;
-	int users_count, i, *users_list;
+	int users_count, i, *users_list, algo_len = strlen(algo_n_salt);
 	float f_dummy;
 	struct crypt_data data;
 	user_info_t user;
-	data.initialized = 0;
 
 	args->cracked_count = 0;
 	fseek(dictionary_fh, args->begin, SEEK_SET);
@@ -111,17 +108,16 @@ void* thread_entry(void* arguments)
 			d_line[users_count - 1] = '\0';
 		}
 
-		//fprintf(args->out_fh, "%s\n", d_line);
 		data.initialized = 0;
-		calculated_hash = crypt_r(d_line, "$1$GC$", &data);
-		users_list = retrieve_users(user_hashes, calculated_hash + 6, &users_count);
+		calculated_hash = crypt_r(d_line, algo_n_salt, &data);
+		users_list = retrieve_users(user_hashes, calculated_hash + algo_len, &users_count);
 		if(users_list != NULL)
 		{
 			for(i = 0 ; i < users_count; ++i)
 			{
 				fseek(merged_fh, users_list[i] * sizeof(user), SEEK_SET);
 				fread(&user, sizeof(user), 1, merged_fh);
-				fprintf(args->out_fh, "%5d  |  %-15s | %-40s | %-50s\n", users_list[i] + 1, user.user_name, user.full_name, d_line);
+				fprintf(args->out_fh, "%5d  |  %-15s | %-40s | %-50s |\n", users_list[i], user.user_name, user.full_name, d_line);
 			}
 			args->cracked_count += users_count;
 		}

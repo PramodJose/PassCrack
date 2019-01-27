@@ -3,10 +3,15 @@
 #include <stdlib.h>
 
 #define MSG_LEN	128
+#define SEPARATOR_COUNT	3
 
 void print_usage();
 void parse_cmdline(int argc, char* argv[], char** restrict, char** restrict, char** restrict, dict_type* restrict);
-int read_hashes(const char* restrict, trie_t restrict);
+int read_hashes(FILE*, trie_t restrict);
+void setup(const char* restrict, FILE** restrict, const char* restrict, FILE** restrict, const char* restrict, FILE** restrict);
+
+void teardown(FILE* restrict, FILE* restrict, FILE* restrict);
+void timer(timer_state, FILE*, const char* restrict);
 
 
 void print_usage()
@@ -69,23 +74,82 @@ void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** re
 	}
 }
 
-int read_hashes(const char* restrict merged_file, trie_t restrict user_hashes)
+
+int read_hashes(FILE* merged_fh, trie_t restrict user_hashes)
 {
-	FILE* merged_fd = fopen(merged_file, "rb");
 	user_info_t user;
-	int i = 0, j = 6, count_dollars;
+	int i = 1;
 
-	for(; fread(&user, sizeof(user), 1, merged_fd) == 1; ++i)
+	for(; fread(&user, sizeof(user), 1, merged_fh) == 1; ++i)
+		add_pair(user_hashes, user.hash, i);
+
+	fseek(merged_fh, 0, SEEK_SET);
+	return (i - 1);
+}
+
+
+void setup(const char* restrict dictionary, FILE** restrict dict_fh, const char* restrict merged, FILE** restrict merged_fh, const char* restrict out, FILE** restrict out_fh)
+{
+	*dict_fh = fopen(dictionary, "r");
+	*merged_fh = fopen(merged, "rb");
+	*out_fh = fopen(out, "w");
+
+	fread(algo_n_salt, sizeof(algo_n_salt), 1, *merged_fh);
+
+	user_hashes = create_trie();
+	users_count = read_hashes(*merged_fh, user_hashes);
+	bitmap_cracked = calloc(users_count, sizeof(int));
+
+	fprintf(*out_fh, "-------+------------------+------------------------------------------+----------------------------------------------------+\n");
+	fprintf(*out_fh, "%5s  |  %-15s | %-40s | %-50s |\n", "NUM", "USER NAME", "FULL NAME", "PASSWORD");
+	fprintf(*out_fh, "-------+------------------+------------------------------------------+----------------------------------------------------+\n");
+}
+
+
+void teardown(FILE* restrict dict_fh, FILE* restrict merged_fh, FILE* restrict out_fh)
+{
+	fclose(dict_fh);
+	fclose(merged_fh);
+	fclose(out_fh);
+
+	destroy_trie(user_hashes);
+	free(bitmap_cracked);
+}
+
+
+void timer(timer_state state, FILE* out_fh, const char* restrict out)
+{
+	static struct timespec start = {0, 0}, end = {0, 0};
+	if(state == start_timer)
+		clock_gettime(CLOCK_MONOTONIC, &start);
+	else
 	{
-		// Uncomment the following code if you want to generalise the finding of the $ signs.
-		//	In that case, make j = 0 (or just remove it), from the declaration above.
-		/*for(j = 0, count_dollars = 0; count_dollars != 3; ++j)
-			if(user.hash[j] == '$')
-				++count_dollars;*/
+		long int seconds_elapsed;
+		clock_gettime(CLOCK_MONOTONIC, &end);
+		seconds_elapsed = end.tv_sec - start.tv_sec;
 
-		add_pair(user_hashes, user.hash + j, i);
+		fprintf(out_fh, "-------+------------------+------------------------------------------+----------------------------------------------------+\n");
+		fprintf(out_fh, "\n\nTotal passwords cracked = %d\n", total_cracked);
+		printf("Total passwords cracked = %d\n", total_cracked);
+
+		if(seconds_elapsed < 2)				// We can offer a little more precision if the seconds elapsed is less than 2.
+		{
+			double precise_delta = (end.tv_nsec - start.tv_nsec) / 10E9;
+			printf("Execution time: %lf seconds\n", precise_delta);
+			fprintf(out_fh, "Execution time: %lf seconds\n", precise_delta);
+		}
+		else if(seconds_elapsed > 600)
+		{
+			float minutes_elapsed = seconds_elapsed / 60.0;
+			printf("Execution time: %lf minutes\n", minutes_elapsed);
+			fprintf(out_fh, "Execution time: %lf minutes\n", minutes_elapsed);
+		}
+		else
+		{
+			printf("Execution time: %ld seconds\n", seconds_elapsed);
+			fprintf(out_fh, "Execution time: %ld seconds\n", seconds_elapsed);
+		}
+		
+		printf("The output has been stored in %s\n", out);
 	}
-
-	fclose(merged_fd);
-	return i;
 }
