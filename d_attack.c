@@ -5,7 +5,7 @@
 #include "abstract_types.h"
 
 #define	MAX_THREADS	8
-#define LINE_LEN	512
+#define DICT_LINE_LEN	512
 
 
 typedef struct
@@ -29,7 +29,7 @@ void d_attack(char* dictionary, FILE* restrict dictionary_fh, char* merged, FILE
 	int i;
 	pthread_t thread_id [MAX_THREADS];
 	thread_args args [MAX_THREADS];
-	char line [LINE_LEN];
+	char line [DICT_LINE_LEN];
 
 	fseek(dictionary_fh, 0, SEEK_END);
 	file_size = ftell(dictionary_fh);
@@ -74,7 +74,7 @@ void d_attack(char* dictionary, FILE* restrict dictionary_fh, char* merged, FILE
 		thread_in = args[i].out_fh;
 		fseek(thread_in, 0, SEEK_SET);
 
-		while(fgets(line, LINE_LEN, thread_in) != NULL)
+		while(fgets(line, DICT_LINE_LEN, thread_in) != NULL)
 			fprintf(out_fh, "%s", line);
 
 		fclose(thread_in);
@@ -88,7 +88,7 @@ void* thread_entry(void* arguments)
 	thread_args* args = arguments;
 	FILE *dictionary_fh = fopen(args->dictionary, "r"), *merged_fh = fopen(args->merged, "rb");
 	long int end = args->end;
-	char d_line [LINE_LEN], *calculated_hash;
+	char d_line [DICT_LINE_LEN], *calculated_hash;
 	int users_count, i, *users_list, algo_len = strlen(algo_n_salt);
 	float f_dummy;
 	struct crypt_data data;
@@ -103,7 +103,7 @@ void* thread_entry(void* arguments)
 			fscanf(dictionary_fh, "%d%f%d%s", &users_count, &f_dummy, &users_count, d_line);
 		else
 		{
-			fgets(d_line, LINE_LEN, dictionary_fh);
+			fgets(d_line, DICT_LINE_LEN, dictionary_fh);
 			users_count = strlen(d_line);
 			d_line[users_count - 1] = '\0';
 		}
