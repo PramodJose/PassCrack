@@ -2,11 +2,11 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#define MSG_LEN	128
+#define ERR_LEN	128
 #define SEPARATOR_COUNT	3
 
 void print_usage();
-void parse_cmdline(int argc, char* argv[], char** restrict, char** restrict, char** restrict, dict_type* restrict);
+void parse_cmdline(int argc, char* argv[], char** restrict, char** restrict, char** restrict, char** restrict, dict_type* restrict);
 int read_hashes(FILE*, trie_t restrict);
 void setup(const char* restrict, FILE** restrict, const char* restrict, FILE** restrict, const char* restrict, FILE** restrict);
 
@@ -25,7 +25,7 @@ void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** re
 {
 	extern char* optarg;
 	int option, errsv;
-	char message [MSG_LEN];
+	char message [ERR_LEN];
 
 	while((option = getopt(argc, argv, "d:i:o:m:r:")) != -1)
 	{
@@ -54,23 +54,31 @@ void parse_cmdline(int argc, char* argv[], char** restrict dictionary, char** re
 		}
 	}
 
-	snprintf(message, MSG_LEN, "The file %s cannot be opened for reading\n", *dictionary);
+	snprintf(message, ERR_LEN, "The file %s cannot be opened for reading.\n", *dictionary);
 	if(euidaccess(*dictionary, R_OK) != 0)
 	{
 		perror(message);
 		exit(EXIT_FAILURE);
 	}
 
-	snprintf(message, MSG_LEN, "The file %s cannot be opened for reading\n", *merged);
+	snprintf(message, ERR_LEN, "The file %s cannot be opened for reading.\n", *merged);
 	if(euidaccess(*merged, R_OK) != 0)
 	{
 		perror(message);
 		exit(EXIT_FAILURE);
 	}
 	
-	snprintf(message, MSG_LEN, "The file %s cannot be opened for reading and writing\n", *out);
+	snprintf(message, ERR_LEN, "The file %s cannot be opened for reading and writing.\n", *out);
 	//	if file exists and does not have required permissions, then show the error.
 	if(euidaccess(*out, F_OK) == 0 && euidaccess(*out, R_OK | W_OK) != 0)
+	{
+		perror(message);
+		exit(EXIT_FAILURE);
+	}
+
+	snprintf(message, ERR_LEN, "The file %s cannot be opened for reading.\n", *rule);
+	//	if rule file is provided and does not have required permissions, then show the error.
+	if(*rule != NULL && euidaccess(*rule, R_OK) != 0)
 	{
 		perror(message);
 		exit(EXIT_FAILURE);
